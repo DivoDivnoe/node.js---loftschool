@@ -2,9 +2,12 @@
 
 const fs = require('fs');
 const path = require('path');
+const removeDir = require('./remove');
 
 const NEW_FOLDER = './artists_by_name';
 const INITIAL_FOLDER = './artists_by_genre';
+
+let numberOfFiles = 0;
 
 const createFolder = newPath => {
   if (!fs.existsSync(newPath)) {
@@ -12,7 +15,7 @@ const createFolder = newPath => {
   }
 };
 
-const startCopy = (oldPath, newPath) => {
+const startCopy = (oldPath, newPath, callback) => {
   const readStream = fs.createReadStream(oldPath, 'utf8');
   const writeStream = fs.createWriteStream(newPath, 'utf8');
 
@@ -25,38 +28,40 @@ const startCopy = (oldPath, newPath) => {
   readStream.on('data', chunk => {
     writeStream.write(chunk);
   });
-};
 
-const copyToFolder = (filename, currentPath) => {
-  const firstLetter = filename[0].toUpperCase();
-  const newFolder = path.join(NEW_FOLDER, firstLetter);
-
-  createFolder(newFolder);
-
-  const newDir = path.join(newFolder, filename);
-  startCopy(currentPath, newDir);
+  readStream.on('end', callback);
 };
 
 const copyRecursive = directory => {
-  fs.readdir(directory, (error, items) => {
-    if (error) {
-      throw error;
-    }
+  const items = fs.readdirSync(directory);
 
-    for (const item of items) {
-      const currentPath = path.join(directory, item);
+  for (const item of items) {
+    const currentPath = path.join(directory, item);
 
-      fs.stat(currentPath, (error, stats) => {
-        if (error) throw error;
+    fs.stat(currentPath, (error, stats) => {
+      if (error) throw error;
 
-        if (stats.isDirectory(currentPath)) {
-          copyRecursive(currentPath);
-        } else {
-          copyToFolder(item, currentPath);
-        }
-      });
-    }
-  });
+      if (stats.isDirectory(currentPath)) {
+        copyRecursive(currentPath);
+      } else {
+        numberOfFiles++;
+
+        const firstLetter = item[0].toUpperCase();
+        const newFolder = path.join(NEW_FOLDER, firstLetter);
+
+        createFolder(newFolder);
+
+        const newDir = path.join(newFolder, item);
+        startCopy(currentPath, newDir, () => {
+          numberOfFiles--;
+
+          if (!numberOfFiles) {
+            removeDir(INITIAL_FOLDER);
+          }
+        });
+      }
+    });
+  }
 };
 
 createFolder(NEW_FOLDER);
