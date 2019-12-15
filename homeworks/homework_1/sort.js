@@ -3,9 +3,6 @@
 const fs = require('fs');
 const path = require('path');
 
-// const NEW_FOLDER = './artists_by_name';
-// const INITIAL_FOLDER = './artists_by_genre';
-
 const ENCODING = 'utf8';
 
 const createFolder = (newPath, callback) => {
