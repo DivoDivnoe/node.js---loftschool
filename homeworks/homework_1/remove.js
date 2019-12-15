@@ -3,28 +3,50 @@
 const fs = require('fs');
 const path = require('path');
 
-const removeDir = (directory, level = 0) => {
-  const items = fs.readdirSync(directory);
+const removeDir = (directory, callback = () => {}) => {
+  fs.readdir(directory, (error, items) => {
+    if (error) throw error;
 
-  for (const item of items) {
-    const currentPath = path.join(directory, item);
-    const stats = fs.statSync(currentPath);
+    // эту переменную завел, чтобы понять, когда полностью очистил папку
+    // так как всё асинхронно, то пока не вижу другого решения
+    let itemsAmount = items.length;
 
-    if (stats.isDirectory(currentPath)) {
-      return removeDir(currentPath, level + 1);
-    } else {
-      fs.unlinkSync(currentPath);
+    for (const item of items) {
+      const currentPath = path.join(directory, item);
+
+      fs.stat(currentPath, (error, stats) => {
+        if (error) throw error;
+
+        if (stats.isDirectory(currentPath)) {
+          removeDir(currentPath, () => {
+            itemsAmount--;
+
+            if (!itemsAmount) {
+              fs.rmdir(directory, error => {
+                if (error) throw error;
+
+                callback();
+              });
+            }
+          });
+        } else {
+          fs.unlink(currentPath, error => {
+            if (error) throw error;
+
+            itemsAmount--;
+
+            if (!itemsAmount) {
+              fs.rmdir(directory, error => {
+                if (error) throw error;
+
+                callback();
+              });
+            }
+          });
+        }
+      });
     }
-  }
-
-  fs.rmdirSync(directory);
-
-  if (!level) return;
-
-  const pathSplited = directory.split(path.sep);
-  const prevPath = path.join(...pathSplited.slice(0, pathSplited.length - 1));
-
-  removeDir(prevPath, level - 1);
+  });
 };
 
 module.exports = removeDir;

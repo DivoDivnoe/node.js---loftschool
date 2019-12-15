@@ -1,68 +1,41 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
+const yargs = require('yargs');
+const { createFolder, sort } = require('./sort');
 const removeDir = require('./remove');
 
-const NEW_FOLDER = './artists_by_name';
-const INITIAL_FOLDER = './artists_by_genre';
+const argv = yargs
+  .usage('Usage: $0 [option]')
+  .help('help')
+  .alias('help', 'h')
+  .version('1.0.0')
+  .alias('version', 'v')
+  .example('$0 --entry ./entry_folder --dest ./destination_folder --remove true')
+  .option('entry', {
+    alias: 'e',
+    describe: 'entry folder',
+    demandOption: true
+  })
+  .option('dest', {
+    alias: 'd',
+    describe: 'destination folder',
+    demandOption: true
+  })
+  .option('remove', {
+    alias: 'r',
+    describe: 'remove entry folder or not',
+    default: false
+  })
+  .epilog('files sorting console application').argv;
 
-let numberOfFiles = 0;
+const { entry, dest, remove } = argv;
 
-const createFolder = newPath => {
-  if (!fs.existsSync(newPath)) {
-    fs.mkdirSync(newPath);
-  }
-};
+createFolder(dest, () => {
+  sort(entry, dest, () => {
+    if (!remove) return console.log('done');
 
-const startCopy = (oldPath, newPath, callback) => {
-  const readStream = fs.createReadStream(oldPath, 'utf8');
-  const writeStream = fs.createWriteStream(newPath, 'utf8');
-
-  [readStream, writeStream].forEach(stream => {
-    stream.on('error', err => {
-      throw err;
+    removeDir(entry, () => {
+      console.log('done');
     });
   });
-
-  readStream.on('data', chunk => {
-    writeStream.write(chunk);
-  });
-
-  readStream.on('end', callback);
-};
-
-const copyRecursive = directory => {
-  const items = fs.readdirSync(directory);
-
-  for (const item of items) {
-    const currentPath = path.join(directory, item);
-
-    fs.stat(currentPath, (error, stats) => {
-      if (error) throw error;
-
-      if (stats.isDirectory(currentPath)) {
-        copyRecursive(currentPath);
-      } else {
-        numberOfFiles++;
-
-        const firstLetter = item[0].toUpperCase();
-        const newFolder = path.join(NEW_FOLDER, firstLetter);
-
-        createFolder(newFolder);
-
-        const newDir = path.join(newFolder, item);
-        startCopy(currentPath, newDir, () => {
-          numberOfFiles--;
-
-          if (!numberOfFiles) {
-            removeDir(INITIAL_FOLDER);
-          }
-        });
-      }
-    });
-  }
-};
-
-createFolder(NEW_FOLDER);
-copyRecursive(INITIAL_FOLDER);
+});
