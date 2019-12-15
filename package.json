@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/DivoDivnoe/node.js-loftschool/issues"
   },
-  "homepage": "https://github.com/DivoDivnoe/node.js-loftschool#readme"
+  "homepage": "https://github.com/DivoDivnoe/node.js-loftschool#readme",
+  "dependencies": {
+    "yargs": "15.0.2"
+  }
 }
