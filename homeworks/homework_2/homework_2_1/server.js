@@ -3,12 +3,13 @@
 const http = require('http');
 const { delay } = require('./utils');
 
+const logTime = () => console.log(new Date().toString());
+
 const serve = (port, interval, timeout) => {
   http
     .createServer(async (req, res) => {
-      const intervalId = setInterval(() => {
-        console.log(new Date().toString());
-      }, interval);
+      logTime();
+      const intervalId = setInterval(logTime, interval);
 
       await delay(timeout);
       clearInterval(intervalId);

@@ -17,7 +17,7 @@ yargs
     yargs => {
       yargs.positional('port', {
         describe: 'port to listen',
-        type: Number,
+        type: 'number',
         default: PORT
       });
     },
@@ -29,13 +29,13 @@ yargs
   .option('interval', {
     alias: 'i',
     describe: 'timer log interval, ms',
-    type: Number,
+    type: 'number',
     default: 1000
   })
   .option('timeout', {
     alias: 't',
     describe: 'stop timer timeout, ms',
-    type: Number,
+    type: 'number',
     demandOption: true
   })
   .epilog('simple server with timer application').argv;

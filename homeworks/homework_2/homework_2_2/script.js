@@ -23,8 +23,9 @@ const argv = yargs
   })
   .option('remove', {
     alias: 'r',
-    describe: 'remove entry folder or not, 0 or 1',
-    default: 0
+    describe: 'remove entry folder or not',
+    type: 'boolean',
+    default: false
   })
   .epilog('files sorting console application').argv;
 
